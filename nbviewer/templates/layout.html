@@ -15,8 +15,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>{{title}}</title>
-
+    <title>Snips Beaker Viewer</title>
+    <link rel="shortcut icon" href="http://chem-international.com/wp-content/themes/twentythirteen/images/home-page-beaker-whole-cropped.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     {% if description %}
@@ -89,22 +89,5 @@
     {% block extra_script %}
     {% endblock %}
 
-    <!-- Analytics
-    ================================================== -->
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'XXX']);
-      _gaq.push(['_trackPageview']);
-
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
-
-    </script>
-    <!--NEW RELIC Stop Perf Measurement-->
-    {{ nrfoot()| safe }}
-    <!--NEW RELIC End-->
   </body>
 </html>
