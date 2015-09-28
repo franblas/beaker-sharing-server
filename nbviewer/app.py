@@ -8,7 +8,7 @@
 import os
 
 import logging
-import markdown 
+import markdown
 
 from cgi import escape
 from concurrent.futures import ThreadPoolExecutor
@@ -68,7 +68,7 @@ def main():
     define("mc_threads", default=1, help="number of threads to use for Async Memcache", type=int)
     define("threads", default=1, help="number of threads to use for background IO", type=int)
     tornado.options.parse_command_line()
-    
+
     # NBConvert config
     config = Config()
     config.HTMLExporter.template_file = 'basic'
@@ -76,14 +76,14 @@ def main():
     config.CSSHTMLHeaderTransformer.enabled = False
     # don't strip the files prefix - we use it for redirects
     # config.Exporter.filters = {'strip_files_prefix': lambda s: s}
-    
+
     exporter = HTMLExporter(config=config, log=log.app_log)
-    
+
     # DEBUG env implies both autoreload and log-level
     if os.environ.get("DEBUG"):
         options.debug = True
         logging.getLogger().setLevel(logging.DEBUG)
-    
+
     # setup memcache
     mc_pool = ThreadPoolExecutor(options.mc_threads)
     pool = ThreadPoolExecutor(options.threads)
@@ -104,14 +104,14 @@ def main():
             log.app_log.info("Using SASL memcache")
         else:
             log.app_log.info("Using plain memecache")
-        
+
         cache = AsyncMultipartMemcache(memcache_urls.split(','), **kwargs)
     else:
         log.app_log.info("Using in-memory cache")
         cache = DummyAsyncCache()
-    
+
     # setup tornado handlers and settings
-    
+
     template_path = pjoin(here, 'templates')
     static_path = pjoin(here, 'static')
     env = Environment(loader=FileSystemLoader(template_path))
@@ -135,7 +135,7 @@ def main():
     client = AsyncHTTPClient()
     github_client = AsyncGitHubClient(client)
     github_client.authenticate()
-    
+
     settings = dict(
         log_function=log_request,
         jinja2_env=env,
@@ -151,7 +151,7 @@ def main():
         render_timeout=20,
         localfile_path=os.path.abspath(options.localfiles),
     )
-    
+
     # create and start the app
     if options.localfiles:
         log.app_log.warning("Serving local notebooks in %s, this can be a security risk", options.localfiles)
@@ -163,7 +163,7 @@ def main():
     log.app_log.info("Listening on port %i", options.port)
     http_server.listen(options.port)
     ioloop.IOLoop.instance().start()
-    
+
 
 if __name__ == '__main__':
     main()

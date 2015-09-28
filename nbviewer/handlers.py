@@ -400,6 +400,9 @@ class CreateHandler(BaseHandler):
         value = self.get_argument('gistnorurl', '')
         redirect_url = transform_ipynb_uri(value)
         app_log.info("create %s => %s", value, redirect_url)
+        f = open('realurl','w')
+        f.write(value)
+        f.close()
         self.redirect(url_concat(redirect_url, {'create': 1}))
 
 
@@ -411,7 +414,7 @@ class URLHandler(RenderingHandler):
         proto = 'http' + secure
 
         remote_url = u"{}://{}".format(proto, quote(url))
-        if not url.endswith('.ipynb'):
+        if not url.endswith('.bkr'):
             # this is how we handle relative links (files/ URLs) in notebooks
             # if it's not a .ipynb URL and it is a link from a notebook,
             # redirect to the original URL rather than trying to render it as a notebook
@@ -446,7 +449,7 @@ class UserGistsHandler(BaseHandler):
         gists = json.loads(response_text(response))
         entries = []
         for gist in gists:
-            notebooks = [f for f in gist['files'] if f.endswith('.ipynb')]
+            notebooks = [f for f in gist['files'] if f.endswith('.bkr')]
             if notebooks:
                 entries.append(dict(
                     id=gist['id'],
@@ -492,7 +495,7 @@ class GistHandler(RenderingHandler):
 
         if filename and filename in files:
 
-            if not many_files_gist or filename.endswith('.ipynb'):
+            if not many_files_gist or filename.endswith('.bkr'):
                 file = files[filename]
                 if file['truncated'] == True:
                   with self.catch_client_error():
@@ -640,7 +643,7 @@ class GitHubTreeHandler(BaseHandler):
                 )
                 e['class'] = 'icon-folder-open'
                 dirs.append(e)
-            elif file['name'].endswith('.ipynb'):
+            elif file['name'].endswith('.bkr'):
                 e['url'] = u'/github/{user}/{repo}/blob/{ref}/{path}'.format(
                 user=user, repo=repo, ref=ref, path=file['path']
                 )
@@ -679,14 +682,17 @@ class GitHubBlobHandler(RenderingHandler):
     @cached
     @gen.coroutine
     def get(self, user, repo, ref, path):
-        raw_url = u"https://raw.github.com/{user}/{repo}/{ref}/{path}".format(
+        f = open('realurl','r')
+        realurl = f.read()
+        #raw_url = u"https://raw.github.com/{user}/{repo}/{ref}/{path}".format(
+        raw_url = u"https://raw.githubusercontent.com/{user}/{repo}/{ref}/{path}".format(
             user=user, repo=repo, ref=ref, path=quote(path)
         )
         blob_url = u"https://github.com/{user}/{repo}/blob/{ref}/{path}".format(
             user=user, repo=repo, ref=ref, path=quote(path),
         )
         with self.catch_client_error():
-            response = yield self.client.fetch(raw_url)
+            response = yield self.client.fetch(realurl)
 
         if response.effective_url.startswith("https://github.com/{user}/{repo}/tree".format(
             user=user, repo=repo
@@ -700,7 +706,7 @@ class GitHubBlobHandler(RenderingHandler):
 
         filedata = response.body
 
-        if path.endswith('.ipynb'):
+        if path.endswith('.bkr'):
             try:
                 nbjson = response_text(response)
             except Exception as e:
@@ -776,6 +782,7 @@ handlers = [
 
     (r'/url[s]?/github\.com/([^\/]+)/([^\/]+)/(tree|blob|raw)/([^\/]+)/(.*)', GitHubRedirectHandler),
     (r'/url[s]?/raw\.?github\.com/([^\/]+)/([^\/]+)/(.*)', RawGitHubURLHandler),
+    (r'/url[s]?/raw\.?githubusercontent\.com/([^\/]+)/([^\/]+)/(.*)', RawGitHubURLHandler),
     (r'/url([s]?)/(.*)', URLHandler),
 
     (r'/github/([\w\-]+)', AddSlashHandler),
