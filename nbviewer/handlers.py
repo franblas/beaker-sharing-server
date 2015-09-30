@@ -684,6 +684,7 @@ class GitHubBlobHandler(RenderingHandler):
     def get(self, user, repo, ref, path):
         f = open('realurl','r')
         realurl = f.read()
+
         #raw_url = u"https://raw.github.com/{user}/{repo}/{ref}/{path}".format(
         raw_url = u"https://raw.githubusercontent.com/{user}/{repo}/{ref}/{path}".format(
             user=user, repo=repo, ref=ref, path=quote(path)
@@ -692,7 +693,18 @@ class GitHubBlobHandler(RenderingHandler):
             user=user, repo=repo, ref=ref, path=quote(path),
         )
         with self.catch_client_error():
-            response = yield self.client.fetch(realurl)
+            data_urls = dict()
+            if os.path.isfile('realurl_data.json'):
+                with open('realurl_data.json', 'r') as outfile:
+                    data_urls = json.load(outfile)
+            new_blob = '' + blob_url.replace('https://github.com/', 'http://beaker.corp.snips.net/github/')
+            if data_urls.get(new_blob):
+                response = yield self.client.fetch(data_urls.get(new_blob))
+            else:
+                data_urls.update({new_blob: str(realurl)})
+                with open('realurl_data.json','w') as out:
+                    json.dump(data_urls, out)
+                response = yield self.client.fetch(realurl)
 
         if response.effective_url.startswith("https://github.com/{user}/{repo}/tree".format(
             user=user, repo=repo
